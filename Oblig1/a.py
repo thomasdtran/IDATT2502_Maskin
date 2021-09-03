@@ -55,7 +55,6 @@ for epoch in range(400000):
     # similar to:
     # model.W -= model.W.grad * 0.01
     # model.b -= model.b.grad * 0.01
-
     optimizer.zero_grad()  # Clear gradients for next step
 
 # Print model variables and loss
@@ -71,7 +70,7 @@ for i in range(len(x_test)):
 plt.plot(x_train, y_train, 'o', label='$(x^{(i)},y^{(i)})$')
 plt.xlabel('x')
 plt.ylabel('y')
-x = torch.tensor([[torch.min(x_train)], [torch.max(x_train)]])  # x = [[1], [6]]]
+x = torch.tensor([[torch.min(x_train)], [torch.max(x_train)]]) 
 plt.plot(x, model.f(x).detach(), label='$\\hat y = f(x) = xW+b$')
 plt.legend()
 plt.show()
