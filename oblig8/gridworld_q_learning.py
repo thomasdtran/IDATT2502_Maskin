@@ -13,6 +13,7 @@ class Environment:
         self.window_width = window_width
         self.allStates = []
         self.WIN_STATE = [((window_width / blockSize) - 1) * blockSize, 0] #Upper right corner 
+        #Danger states in the upper left corner and lower right corner, 
         self.DANGER_STATE = [[0,0],
                              [((window_width / blockSize) - 1) * blockSize, ((window_height / blockSize) - 1) * blockSize]]
         self.action = [0,1,2,3] #Available actions
