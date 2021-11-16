@@ -74,9 +74,6 @@ def a2c(env, state_dim, action_dim):
 
                 all_rewards.append(sum_rewards)
 
-                if(episode % 50 == 0 and episode > 0):
-                    actor_critic.save_checkpoint(ac_optimizer)
-
                 sys.stdout.write("episode: {}, reward: {}, length: {}, longest traversel: {} \n".format(episode, np.sum(rewards), steps, longest_run))
 
                 break
