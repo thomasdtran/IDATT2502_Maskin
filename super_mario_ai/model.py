@@ -1,6 +1,7 @@
 import torch 
 import torch.nn as nn
 import torch.nn.functional as F
+import copy
 
 class ActorCritic(nn.Module):
     def __init__(self, input_n, action_n):
@@ -33,3 +34,14 @@ class ActorCritic(nn.Module):
         policy = F.softmax(self.actor_linear(state), dim=1)
 
         return value, policy
+    
+    def save_model(self):
+        best_model_state = copy.deepcopy(self.state_dict())
+        torch.save(best_model_state, "./trained_models/a2c_super_mario")
+    
+    def save_checkpoint(self, optimizer):
+        checkpoint_state = copy.deepcopy(self.state_dict())
+        torch.save({
+            'model_state_dict': checkpoint_state,
+            'optimizer_state_dict': optimizer.state_dict(),
+            }, "./model_checkpoints/a2c_checkpoint")

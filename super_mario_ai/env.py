@@ -5,6 +5,7 @@ from gym.wrappers import FrameStack
 import gym_super_mario_bros
 import numpy as np
 from gym_super_mario_bros.actions import SIMPLE_MOVEMENT
+from gym_super_mario_bros.actions import COMPLEX_MOVEMENT
 from nes_py.wrappers import JoypadSpace
 from torchvision import transforms as T
 import torch
@@ -69,7 +70,7 @@ class ResizeObservation(gym.ObservationWrapper):
         return observation
 
 def create_env():
-    actions = SIMPLE_MOVEMENT
+    actions = COMPLEX_MOVEMENT
     env = gym_super_mario_bros.make('SuperMarioBros-v0')
     env = JoypadSpace(env, actions)
     env = SkipFrame(env, skip=4)

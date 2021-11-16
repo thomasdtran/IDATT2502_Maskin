@@ -11,36 +11,36 @@ from env import create_env
 
 
 # hyperparameters
-learning_rate = 3e-4
-
+learning_rate = 1e-4
 # Constants
-GAMMA = 0.99
-num_steps = 2000
-max_episodes = 3000
+GAMMA = 0.9
+#num_steps = 3000
+max_episodes = 5000
 
 def a2c(env, state_dim, action_dim):
     input_n = state_dim
     output_n = action_dim
     
     actor_critic = ActorCritic(input_n, output_n)
+    actor_critic.load_state_dict(torch.load("./trained_models/a2c_super_mario"))
     ac_optimizer = torch.optim.Adam(actor_critic.parameters(), lr=learning_rate)
 
-    all_lengths = []
-    average_lengths = []
     all_rewards = []
     entropy_term = 0
-
     highest_reward = 0
 
     for episode in range(max_episodes):
         log_probs = []
         values = []
         rewards = []
+        longest_run = 0
         
         state = env.reset()
-    
-        for steps in range(num_steps):
+        steps = 0
+
+        while True:
             env.render()
+            steps +=1 
             value, policy_dist = actor_critic.forward(state)
             value = value.detach().numpy()[0,0]
             dist = policy_dist.detach().numpy() 
@@ -50,6 +50,11 @@ def a2c(env, state_dim, action_dim):
             entropy = -np.sum(np.mean(dist) * np.log(dist))
             new_state, reward, done, info = env.step(action)
 
+            #Just to keep track of how long the agent managed to run in each episode
+            run_length = info["x_pos"]
+            if(run_length > longest_run):
+                longest_run = run_length
+
             rewards.append(reward)
             values.append(value)
             log_probs.append(log_prob)
@@ -57,7 +62,7 @@ def a2c(env, state_dim, action_dim):
 
             state = new_state
 
-            if done or steps == num_steps-1:
+            if done:
                 Qval, _ = actor_critic.forward(new_state)
                 Qval = Qval.detach().numpy()[0,0]
 
@@ -65,13 +70,14 @@ def a2c(env, state_dim, action_dim):
 
                 if(sum_rewards > highest_reward):
                     highest_reward = sum_rewards
-                    best_model_state = copy.deepcopy(actor_critic.state_dict())
-                    torch.save(best_model_state, "./trained_models/a2c_super_mario")
+                    actor_critic.save_model()
 
                 all_rewards.append(sum_rewards)
-                all_lengths.append(steps)
-                average_lengths.append(np.mean(all_lengths[-10:]))
-                sys.stdout.write("episode: {}, reward: {}, steps: {}, traversed_length: {} \n".format(episode, np.sum(rewards), steps, info["x_pos"]))
+
+                if(episode % 50 == 0 and episode > 0):
+                    actor_critic.save_checkpoint(ac_optimizer)
+
+                sys.stdout.write("episode: {}, reward: {}, length: {}, longest traversel: {} \n".format(episode, np.sum(rewards), steps, longest_run))
 
                 break
         
@@ -96,23 +102,23 @@ def a2c(env, state_dim, action_dim):
         ac_optimizer.step()
     
     env.close()
-    draw_plot(all_rewards)
+    data_interval = 20
+    plot_reward(all_rewards, data_interval)
 
-def draw_plot(all_rewards):
+def plot_reward(all_rewards, interval):
     y = []
     x = []
 
     x_counter = 0
-    for i in all_rewards[::20]:
-        x_counter += 20
+    for i in all_rewards[::interval]:
         y.append(i)
         x.append(x_counter)
+        x_counter += interval
 
     plt.plot(x,y)
     plt.xlabel("Episode")
     plt.ylabel("Reward")
     plt.savefig("./plots/reward_episode")
-
 
 env, state_dim, action_dim = create_env()
 
