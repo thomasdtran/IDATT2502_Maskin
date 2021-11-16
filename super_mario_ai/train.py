@@ -22,7 +22,7 @@ def a2c(env, state_dim, action_dim):
     output_n = action_dim
     
     actor_critic = ActorCritic(input_n, output_n)
-    actor_critic.load_state_dict(torch.load("./trained_models/a2c_super_mario"))
+    #actor_critic.load_state_dict(torch.load("./trained_models/a2c_super_mario"))
     ac_optimizer = torch.optim.Adam(actor_critic.parameters(), lr=learning_rate)
 
     all_rewards = []
