@@ -3,7 +3,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
-
+import copy
+import matplotlib.pyplot as plt
 from model import ActorCritic
 from env import create_env
 
@@ -29,11 +30,13 @@ def a2c(env, state_dim, action_dim):
     all_rewards = []
     entropy_term = 0
 
+    highest_reward = 0
+
     for episode in range(max_episodes):
         log_probs = []
         values = []
         rewards = []
-
+        
         state = env.reset()
     
         for steps in range(num_steps):
@@ -45,7 +48,7 @@ def a2c(env, state_dim, action_dim):
             action = np.random.choice(output_n, p=np.squeeze(dist))
             log_prob = torch.log(policy_dist.squeeze(0)[action])
             entropy = -np.sum(np.mean(dist) * np.log(dist))
-            new_state, reward, done, _ = env.step(action)
+            new_state, reward, done, info = env.step(action)
 
             rewards.append(reward)
             values.append(value)
@@ -57,11 +60,18 @@ def a2c(env, state_dim, action_dim):
             if done or steps == num_steps-1:
                 Qval, _ = actor_critic.forward(new_state)
                 Qval = Qval.detach().numpy()[0,0]
-                all_rewards.append(np.sum(rewards))
+
+                sum_rewards = np.sum(rewards)
+
+                if(sum_rewards > highest_reward):
+                    highest_reward = sum_rewards
+                    best_model_state = copy.deepcopy(actor_critic.state_dict())
+                    torch.save(best_model_state, "./trained_models/a2c_super_mario")
+
+                all_rewards.append(sum_rewards)
                 all_lengths.append(steps)
                 average_lengths.append(np.mean(all_lengths[-10:]))
-
-                sys.stdout.write("episode: {}, reward: {}, total length: {}, average length: {} \n".format(episode, np.sum(rewards), steps, average_lengths[-1]))
+                sys.stdout.write("episode: {}, reward: {}, steps: {}, traversed_length: {} \n".format(episode, np.sum(rewards), steps, info["x_pos"]))
 
                 break
         
@@ -84,8 +94,25 @@ def a2c(env, state_dim, action_dim):
         ac_optimizer.zero_grad()
         ac_loss.backward()
         ac_optimizer.step()
+    
+    env.close()
+    draw_plot(all_rewards)
 
-    env.close()    
+def draw_plot(all_rewards):
+    y = []
+    x = []
+
+    x_counter = 0
+    for i in all_rewards[::20]:
+        x_counter += 20
+        y.append(i)
+        x.append(x_counter)
+
+    plt.plot(x,y)
+    plt.xlabel("Episode")
+    plt.ylabel("Reward")
+    plt.savefig("./plots/reward_episode")
+
 
 env, state_dim, action_dim = create_env()
 
