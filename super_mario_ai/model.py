@@ -31,18 +31,18 @@ class ActorCritic(nn.Module):
         state = state.unsqueeze(0)
 
         value = F.relu((self.critic_conv1(state)))
-        value = F.relu((self.critic_conv2(state)))
-        value = F.relu((self.critic_conv3(state)))
-        value = F.relu(self.critic_dense(state.reshape(-1, 64 * 7 * 7)))
+        value = F.relu((self.critic_conv2(value)))
+        value = F.relu((self.critic_conv3(value)))
+        value = F.relu(self.critic_dense(value.reshape(-1, 64 * 7 * 7)))
 
-        value = self.critic_linear(state)
+        value = self.critic_linear(value)
 
         policy = F.relu((self.actor_conv1(state)))
-        policy = F.relu((self.actor_conv2(state)))
-        policy = F.relu((self.actor_conv3(state)))
-        policy = F.relu(self.actor_dense(state.reshape(-1, 64 * 7 * 7)))
+        policy = F.relu((self.actor_conv2(policy)))
+        policy = F.relu((self.actor_conv3(policy)))
+        policy = F.relu(self.actor_dense(policy.reshape(-1, 64 * 7 * 7)))
 
-        policy = F.softmax(self.actor_linear(state), dim=1)
+        policy = F.softmax(self.actor_linear(policy), dim=1)
 
         return value, policy
     
