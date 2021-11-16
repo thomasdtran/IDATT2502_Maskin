@@ -28,7 +28,6 @@ class SkipFrame(gym.Wrapper):
             if done:
                 break
         return obs, total_reward, done, info
-    
 
 #The Agent doesnt require colors, so we grayscale the observation
 class GrayScaleObservation(gym.ObservationWrapper):
@@ -69,6 +68,23 @@ class ResizeObservation(gym.ObservationWrapper):
         observation = transforms(observation).squeeze(0)
         return observation
 
+class CustomReward(gym.Wrapper):
+    def __init__(self, env):
+        super(CustomReward, self).__init__(env)
+        self.curr_score = 0
+
+    def step(self, action):
+        state, reward, done, info = self.env.step(action)
+        reward += (info["score"] - self.curr_score) / 40.
+        self.curr_score = info["score"]
+
+        if done:
+            if info["flag_get"]:
+                reward += 50
+            else:
+                reward -= 50
+        return state, reward / 10., done, info 
+
 def create_env():
     actions = COMPLEX_MOVEMENT
     env = gym_super_mario_bros.make('SuperMarioBros-v0')
@@ -76,6 +92,7 @@ def create_env():
     env = SkipFrame(env, skip=4)
     env = GrayScaleObservation(env)
     env = ResizeObservation(env, shape=84)
+    env = CustomReward(env)
     #Stacks 4 consecutive observations to get a sense of motion and direction
     env = FrameStack(env, num_stack=4)
 
