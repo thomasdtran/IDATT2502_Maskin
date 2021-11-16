@@ -1,0 +1,2 @@
+Properly understand policy gradient methods
+Understand a2c: advantage funcion, what does it mean with future rewards stuff???

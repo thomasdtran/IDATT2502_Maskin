@@ -5,12 +5,16 @@ Articel about by google a3c: https://arxiv.org/pdf/1602.01783.pdf
 Super Mario Pytorch a3c: https://github.com/uvipen/Super-mario-bros-A3C-pytorch
 Super Mario Pytorch ppo: https://github.com/uvipen/Super-mario-bros-PPO-pytorch
 
-
 Problemstilling: Hvilken model vil være raskest utifra hvilke action lists vi velger?
 
 Super mario gym env: https://pypi.org/project/gym-super-mario-bros/
 
 comparison of different algorithms: https://cse.buffalo.edu/~avereshc/rl_fall20/Comparison_of_RL_Algorithms_vvelivel_sudhirya.pdf
 
-PPO implementation: https://medium.com/analytics-vidhya/coding-ppo-from-scratch-with-pytorch-part-1-4-613dfc1b14c8
+
+
+
+super mario gym preproccesing of env with wrappers taken from: https://pytorch.org/tutorials/intermediate/mario_rl_tutorial.html
+a2c training loop taken from: https://towardsdatascience.com/understanding-actor-critic-methods-931b97b6df3f
+
 
