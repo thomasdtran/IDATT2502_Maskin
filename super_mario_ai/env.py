@@ -29,7 +29,7 @@ class SkipFrame(gym.Wrapper):
         return obs, total_reward, done, info
     
 
-#The Agent doesnt require colors, so we grayscale the input
+#The Agent doesnt require colors, so we grayscale the observation
 class GrayScaleObservation(gym.ObservationWrapper):
     def __init__(self, env):
         super().__init__(env)
