@@ -31,7 +31,7 @@ class Actor(nn.Module):
 
     def save_model(self):
         best_model_state = copy.deepcopy(self.state_dict())
-        torch.save(best_model_state, "./trained_models/actor")
+        torch.save(best_model_state, "/trained_models/actor")
 
 
 class Critic(nn.Module):
