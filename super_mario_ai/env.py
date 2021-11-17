@@ -90,12 +90,12 @@ def create_env():
     #env = gym_super_mario_bros.make('SuperMarioBros-v0')
     #env = JoypadSpace(env, actions)
     env = gym.make("CartPole-v0")
-    env = SkipFrame(env, skip=4)
+    """env = SkipFrame(env, skip=4)
     env = GrayScaleObservation(env)
     env = ResizeObservation(env, shape=84)
     env = CustomReward(env)
     #Stacks 4 consecutive observations to get a sense of motion and direction
-    env = FrameStack(env, num_stack=4)
+    env = FrameStack(env, num_stack=4)"""
 
     state_dim = (4, 84, 84)
     #return env, state_dim, len(actions)
