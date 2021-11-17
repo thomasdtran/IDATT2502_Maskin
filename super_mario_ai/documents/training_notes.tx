@@ -4,4 +4,5 @@ complex movement: My guy jumps around left and rightm still stuck on them pipes
 After 10 episodes it learnt to mvoe forwards and not jump back too much is good
 Runs into  ennemy all the time, same action just running straight for 400 episodes
 Maybe its becuase the reward which is positive is too much depended on moving forwards? Over fitting?
-Added also rewards based on ingame score to see if this fixes it 
+Added also rewards based on ingame score to see if this fixes it.
+SIKE, maybe its because the actor and critic shared the same weights??
