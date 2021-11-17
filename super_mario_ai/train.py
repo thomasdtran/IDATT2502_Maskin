@@ -5,10 +5,8 @@ import torch.nn.functional as F
 import numpy as np
 import copy
 import matplotlib.pyplot as plt
-from model import ActorCritic
-from models import Actor, Critic
+from model import Actor, Critic
 from env import create_env
-
 
 
 # hyperparameters
@@ -22,9 +20,8 @@ def a2c(env, state_dim, action_dim):
     input_n = state_dim
     output_n = action_dim
     
-    actor_critic = ActorCritic(input_n, output_n)
-    #actor_critic.load_state_dict(torch.load("./trained_models/a2c_super_mario"))
-    ac_optimizer = torch.optim.Adam(actor_critic.parameters(), lr=learning_rate)
+    actor = Actor(input_n, output_n, learning_rate)
+    critic = Critic(output_n, learning_rate)
 
     all_rewards = []
     entropy_term = 0
@@ -42,7 +39,8 @@ def a2c(env, state_dim, action_dim):
         while True:
             env.render()
             steps +=1 
-            value, policy_dist = actor_critic.forward(state)
+            value = critic.forward(state)
+            policy_dist = actor.forward(state)
             value = value.detach().numpy()[0,0]
             dist = policy_dist.detach().numpy() 
 
@@ -64,14 +62,14 @@ def a2c(env, state_dim, action_dim):
             state = new_state
 
             if done:
-                Qval, _ = actor_critic.forward(new_state)
+                Qval = critic.forward(new_state)
                 Qval = Qval.detach().numpy()[0,0]
 
                 sum_rewards = np.sum(rewards)
 
                 if(sum_rewards > highest_reward):
                     highest_reward = sum_rewards
-                    actor_critic.save_model()
+                    actor.save_model()
 
                 all_rewards.append(sum_rewards)
 
@@ -95,9 +93,11 @@ def a2c(env, state_dim, action_dim):
         critic_loss = 0.5 * advantage.pow(2).mean()
         ac_loss = actor_loss + critic_loss + 0.001 * entropy_term
 
-        ac_optimizer.zero_grad()
+        critic.optimizer.zero_grad()
+        actor.optimizer.zero_grad()
         ac_loss.backward()
-        ac_optimizer.step()
+        critic.optimizer.step()
+        critic.optimizer.step()
     
     env.close()
     data_interval = 20

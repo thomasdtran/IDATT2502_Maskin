@@ -1,58 +1,61 @@
-import torch 
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import copy
 
-class ActorCritic(nn.Module):
-    def __init__(self, input_n, action_n):
-        super(ActorCritic, self).__init__()
 
-        c, h, w = input_n
-        # Model layers (includes initialized model variables):
-        self.critic_conv1 = nn.Conv2d(c, 32, kernel_size=8, stride=4)
-        self.critic_conv2 = nn.Conv2d(32, 64, kernel_size=4, stride=2)
-        self.critic_conv3 = nn.Conv2d(64, 64, kernel_size=3, stride=1)
-        self.critic_dense = nn.Linear(64 * 7 * 7, 512)
+class Actor(nn.Module):
+    def __init__(self, state_dim, action_dim, lr):
+        super().__init__()
+        c, h, w = state_dim
+        self.conv1 = nn.Conv2d(c, 32, kernel_size=8, stride=4)
+        self.conv2 = nn.Conv2d(32, 64, kernel_size=4, stride=2)
+        self.conv3 = nn.Conv2d(64, 64, kernel_size=3, stride=1)
+        self.dense = nn.Linear(64 * 7 * 7, 512)
+        self.linear = nn.Linear(512, action_dim)
 
-        self.actor_conv1 = nn.Conv2d(c, 32, kernel_size=8, stride=4)
-        self.actor_conv2 = nn.Conv2d(32, 64, kernel_size=4, stride=2)
-        self.actor_conv3 = nn.Conv2d(64, 64, kernel_size=3, stride=1)
-        self.actor_dense = nn.Linear(64 * 7 * 7, 512)
-    
-        #Activation function to get the estimate of value functions
-        #84 is the size of the input frame?/state?
-        self.critic_linear = nn.Linear(512, 1)
-        #Activation function to get policy distribution
-        self.actor_linear = nn.Linear(512, action_n)
+        self.optimizer = torch.optim.Adam(self.parameters(), lr=lr)
 
     def forward(self, state):
         state = state.__array__()
         state = torch.tensor(state)
         state = state.unsqueeze(0)
 
-        value = F.relu((self.critic_conv1(state)))
-        value = F.relu((self.critic_conv2(value)))
-        value = F.relu((self.critic_conv3(value)))
-        value = F.relu(self.critic_dense(value.reshape(-1, 64 * 7 * 7)))
+        state = F.relu(self.conv1(state))
+        state = F.relu(self.conv2(state))
+        state = F.relu(self.conv3(state))
+        state = F.relu(self.dense(state.reshape(-1, 64 * 7 * 7)))
+        state = self.linear(state)
 
-        value = self.critic_linear(value)
+        return F.softmax(state, dim=1)
 
-        policy = F.relu((self.actor_conv1(state)))
-        policy = F.relu((self.actor_conv2(policy)))
-        policy = F.relu((self.actor_conv3(policy)))
-        policy = F.relu(self.actor_dense(policy.reshape(-1, 64 * 7 * 7)))
-
-        policy = F.softmax(self.actor_linear(policy), dim=1)
-
-        return value, policy
-    
     def save_model(self):
         best_model_state = copy.deepcopy(self.state_dict())
-        torch.save(best_model_state, "./trained_models/a2c_super_mario")
+        torch.save(best_model_state, "./trained_models/actor")
+
+
+class Critic(nn.Module):
+    def __init__(self, state_dim, lr):
+        super().__init__()
+        c, h, w = state_dim
+        self.conv1 = nn.Conv2d(c, 32, kernel_size=8, stride=4)
+        self.conv2 = nn.Conv2d(32, 64, kernel_size=4, stride=2)
+        self.conv3 = nn.Conv2d(64, 64, kernel_size=3, stride=1)
+        self.dense = nn.Linear(64 * 7 * 7, 512)
+        self.linear = nn.Linear(512, 1)
+
+        self.optimizer = torch.optim.Adam(self.parameters(), lr=lr)
+
+    def forward(self, state):
+        state = state.__array__()
+        state = torch.tensor(state)
+        state = state.unsqueeze(0)
+
+        state = F.relu(self.conv1(state))
+        state = F.relu(self.conv2(state))
+        state = F.relu(self.conv3(state))
+        state = F.relu(self.dense(state.reshape(-1, 64 * 7 * 7)))
+        return torch.tanh(self.linear(state))
+  
     
-    def save_checkpoint(self, optimizer):
-        checkpoint_state = copy.deepcopy(self.state_dict())
-        torch.save({
-            'model_state_dict': checkpoint_state,
-            'optimizer_state_dict': optimizer.state_dict(),
-            }, "./model_checkpoints/a2c_checkpoint")
+
