@@ -70,6 +70,7 @@ def a2c(env, state_dim, action_dim):
                 if(sum_rewards > highest_reward):
                     highest_reward = sum_rewards
                     actor.save_model()
+                    critic.save_model()
 
                 all_rewards.append(sum_rewards)
 
