@@ -86,9 +86,10 @@ class CustomReward(gym.Wrapper):
         return state, reward / 10., done, info 
 
 def create_env():
-    actions = COMPLEX_MOVEMENT
-    env = gym_super_mario_bros.make('SuperMarioBros-v0')
-    env = JoypadSpace(env, actions)
+    #actions = COMPLEX_MOVEMENT
+    #env = gym_super_mario_bros.make('SuperMarioBros-v0')
+    #env = JoypadSpace(env, actions)
+    env = gym.make("CartPole-v0")
     env = SkipFrame(env, skip=4)
     env = GrayScaleObservation(env)
     env = ResizeObservation(env, shape=84)
@@ -97,4 +98,5 @@ def create_env():
     env = FrameStack(env, num_stack=4)
 
     state_dim = (4, 84, 84)
-    return env, state_dim, len(actions)
+    #return env, state_dim, len(actions)
+    return env, state_dim, env.action_space.n

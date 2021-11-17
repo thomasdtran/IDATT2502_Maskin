@@ -56,6 +56,10 @@ class Critic(nn.Module):
         state = F.relu(self.conv3(state))
         state = F.relu(self.dense(state.reshape(-1, 64 * 7 * 7)))
         return torch.tanh(self.linear(state))
+
+    def save_model(self):
+        best_model_state = copy.deepcopy(self.state_dict())
+        torch.save(best_model_state, "./trained_models/critic")
   
     
 
