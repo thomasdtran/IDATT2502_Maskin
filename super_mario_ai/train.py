@@ -13,8 +13,8 @@ from env import create_env
 learning_rate = 1e-4
 # Constants
 GAMMA = 0.9
-#num_steps = 3000
-max_episodes = 5000
+
+max_episodes = 3000
 
 def a2c(env, state_dim, action_dim):
     input_n = state_dim
