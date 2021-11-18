@@ -18,7 +18,7 @@ import torch.nn.functional as F
 import copy
 
 
-class Actor(nn.Module):
+class ActorCritic(nn.Module):
     def __init__(self,action_dim, lr):
         super().__init__()
 
@@ -26,7 +26,9 @@ class Actor(nn.Module):
         self.conv2 = nn.Conv2d(16, 32, kernel_size=5, stride=2)
         self.conv3 = nn.Conv2d(32, 32, kernel_size=3, stride=2)
         self.dense = nn.Linear(864, 512)
-        self.linear = nn.Linear(512, action_dim)
+
+        self.critic_linear = nn.Linear(512, 1)
+        self.actor_linear = nn.Linear(512, action_dim)
 
         self.optimizer = torch.optim.Adam(self.parameters(), lr=lr)
 
@@ -36,39 +38,17 @@ class Actor(nn.Module):
         state = F.relu(self.conv2(state))
         state = F.relu(self.conv3(state))
         state = F.relu(self.dense(state.reshape(-1, 864)))
-        state = self.linear(state)
 
-        return F.softmax(state, dim=1)
+        value = self.critic_linear(state)
+        policy = self.actor_linear(state)
+
+        return F.tanh(value), F.softmax(policy, dim=1)
 
     def save_model(self):
         best_model_state = copy.deepcopy(self.state_dict())
         torch.save(best_model_state, "./trained_models/actor")
 
-
-class Critic(nn.Module):
-    def __init__(self, lr):
-        super().__init__()
-        self.conv1 = nn.Conv2d(3, 16, kernel_size=5, stride=2)
-        self.conv2 = nn.Conv2d(16, 32, kernel_size=5, stride=2)
-        self.conv3 = nn.Conv2d(32, 32, kernel_size=3, stride=2)
-        self.dense = nn.Linear(864, 512)
-        self.linear = nn.Linear(512, 1)
-
-        self.optimizer = torch.optim.Adam(self.parameters(), lr=lr)
-
-    def forward(self, state):
-
-        state = F.relu(self.conv1(state))
-        state = F.relu(self.conv2(state))
-        state = F.relu(self.conv3(state))
-        state = F.relu(self.dense(state.reshape(-1, 864)))
-        return torch.tanh(self.linear(state))
-
-    def save_model(self):
-        best_model_state = copy.deepcopy(self.state_dict())
-        torch.save(best_model_state, "./trained_models/critic")
   
-    
 class Cartpole():
     def __init__(self):
         self.env = gym.make('CartPole-v0').unwrapped
@@ -126,8 +106,7 @@ max_episodes = 5000
 def a2c(env, cartpole):
     output_n = env.action_space.n
 
-    actor = Actor(output_n, learning_rate)
-    critic = Critic(learning_rate)
+    actor_critic = ActorCritic(output_n, learning_rate)
 
     all_rewards = []
     entropy_term = 0
@@ -146,8 +125,7 @@ def a2c(env, cartpole):
         while True:
             env.render()
             steps += 1
-            value = critic.forward(state)
-            policy_dist = actor.forward(state)
+            value, policy_dist = actor_critic.forward(state)
             value = value.detach().numpy()[0, 0]
             dist = policy_dist.detach().numpy()
 
@@ -167,15 +145,10 @@ def a2c(env, cartpole):
             state = new_state
 
             if done:
-                Qval = critic.forward(new_state)
+                Qval,_ = actor_critic.forward(new_state)
                 Qval = Qval.detach().numpy()[0, 0]
 
                 sum_rewards = np.sum(rewards)
-
-                if(sum_rewards > highest_reward):
-                    highest_reward = sum_rewards
-                    actor.save_model()
-                    critic.save_model()
 
                 all_rewards.append(sum_rewards)
 
@@ -200,20 +173,10 @@ def a2c(env, cartpole):
         critic_loss = 0.5 * advantage.pow(2).mean()
         ac_loss = actor_loss + critic_loss + 0.001 * entropy_term
 
-        critic.optimizer.zero_grad()
-        actor.optimizer.zero_grad()
+        actor_critic.optimizer.zero_grad()
         ac_loss.backward()
-        critic.optimizer.step()
-        critic.optimizer.step()
-
-        if((episode % 100 == 0) and (episode > 0)):
-            torch.save({
-                'epoch': episode,
-                'critic_model_state_dict': copy.deepcopy(critic.state_dict()),
-                'critic_optimizer_state_dict': critic.optimizer.state_dict(),
-                'actor_model_state_dict': copy.deepcopy(actor.state_dict()),
-                'actor_optimizer_state_dict': actor.optimizer.state_dict(),
-            }, "model_checkpoints/checkpoint_{}".format(episode))
+        actor_critic.optimizer.step()
+        
 
     env.close()
     data_interval = 20
